@@ -1,17 +1,17 @@
-#OmaPlugin Manager
+# OmaPlugin Manager
 
 A graphical plugin manager for Omarchy
 
-##Features
+## Features
 
--View installed plugins
--Enable/Disable installed plugins
--Uninstall plugins
+- View installed plugins
+- Enable/Disable installed plugins
+- Uninstall plugins
 
-##Status
+## Status
 
 Work in progress
 
-##License
+## License
 
 MIT

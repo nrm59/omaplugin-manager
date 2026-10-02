@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "nrm59.omaplugin-manager",
+  "name": "OmaPlugin Manager",
+  "version": "0.1.0",
+  "author": "nrm59",
+  "description": "A graphical plugin manager for Omarchy.",
+  "kinds": [
+    "bar-widget",
+    "panel"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "OmaPlugin Manager",
+    "category": "system",
+    "defaultSection": "right",
+    "allowMultiple": false
+  }
+}

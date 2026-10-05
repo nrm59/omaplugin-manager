@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Io
 import qs.Commons
 import qs.Ui
+import "Model.js" as Model
 
 Panel {
     id: root
@@ -17,6 +18,16 @@ Panel {
     property var deleteTarget: null
 
     readonly property var barIdentity: hostWidget || root
+
+    readonly property color hoverFill: root.bar
+        ? Style.hoverFillFor(root.bar.foreground, Color.accent)
+        : "transparent"
+    readonly property color selectedFill: root.bar
+        ? Style.selectedFillFor(root.bar.foreground, Color.accent)
+        : "transparent"
+    readonly property color urgent: root.bar ? root.bar.urgent : Color.urgent
+
+    property int selectedIndex: -1
 
     function open() {
         openedFromHotkey = false
@@ -152,7 +163,7 @@ Panel {
 
                 color: root.bar.foreground
                 font.family: root.bar.fontFamily
-                font.pixelSize: Style.font.heading
+                font.pixelSize: Style.font.subtitle
                 font.bold: true
             }
 
@@ -171,186 +182,18 @@ Panel {
                     id: pluginList
 
                     width: parent.width
-                    spacing: Style.space(6)
+                    spacing: Style.space(4)
 
                     Repeater {
-                        model: root.plugins
+                        model: Model.sortPlugins(root.plugins)
 
-                        Rectangle {
+                        PluginRow {
                             required property var modelData
 
                             width: pluginList.width
-                            height: 38
-
-                            radius: 7
-
-                            color: Qt.rgba(
-                                root.bar.foreground.r,
-                                root.bar.foreground.g,
-                                root.bar.foreground.b,
-                                0.06
-                            )
-
-                            Item {
-                                id: rowContent
-
-                                anchors.fill: parent
-
-                                anchors.leftMargin: 9
-                                anchors.rightMargin: 9
-
-                                Rectangle {
-                                    id: statusDot
-
-                                    anchors.left: parent.left
-                                    anchors.verticalCenter: parent.verticalCenter
-
-                                    width: 7
-                                    height: 7
-
-                                    radius: 3.5
-
-                                    color: modelData.enabled
-                                        ? "#55dd77"
-                                        : "#ff5555"
-                                }
-
-                                Rectangle {
-                                    id: actionButton
-
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 6
-                                    anchors.verticalCenter: parent.verticalCenter
-
-                                    width: 74
-                                    height: 23
-
-                                    radius: 6
-
-                                    color: modelData.canDisable
-                                        ? Qt.rgba(
-                                            root.bar.foreground.r,
-                                            root.bar.foreground.g,
-                                            root.bar.foreground.b,
-                                            0.12
-                                        )
-                                        : Qt.rgba(
-                                            root.bar.foreground.r,
-                                            root.bar.foreground.g,
-                                            root.bar.foreground.b,
-                                            0.04
-                                        )
-
-                                    opacity: modelData.canDisable
-                                        ? 1.0
-                                        : 0.4
-
-                                    Text {
-                                        anchors.fill: parent
-
-                                        anchors.leftMargin: 4
-                                        anchors.rightMargin: 4
-
-                                        text: modelData.enabled
-                                            ? "Disable"
-                                            : "Enable"
-
-                                        color: root.bar.foreground
-
-                                        font.family: root.bar.fontFamily
-                                        font.pixelSize: Style.font.small * 0.72
-
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-
-                                        elide: Text.ElideRight
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-
-                                        enabled: modelData.canDisable
-
-                                        cursorShape: Qt.PointingHandCursor
-
-                                        onClicked: {
-                                            root.togglePlugin(modelData)
-                                        }
-                                    }
-                                }
-
-                                Rectangle {
-                                    id: uninstallButton
-
-                                    anchors.right: actionButton.left
-                                    anchors.rightMargin: 9
-                                    anchors.verticalCenter: parent.verticalCenter
-
-                                    width: 90
-                                    height: 23
-
-                                    radius: 6
-
-                                    visible: !modelData.firstParty
-
-                                    color: Qt.rgba(
-                                        1,
-                                        0.2,
-                                        0.2,
-                                        0.10
-                                    )
-
-                                    Text {
-                                        anchors.fill: parent
-
-                                        anchors.leftMargin: 4
-                                        anchors.rightMargin: 4
-
-                                        text: "Uninstall"
-
-                                        color: "#ff5555"
-
-                                        font.family: root.bar.fontFamily
-                                        font.pixelSize: Style.font.small * 0.72
-
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-
-                                        elide: Text.ElideRight
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-
-                                        cursorShape: Qt.PointingHandCursor
-
-                                        onClicked: {
-                                            root.askDeletePlugin(modelData)
-                                        }
-                                    }
-                                }
-
-                                Text {
-                                    id: pluginName
-
-                                    anchors.left: statusDot.right
-                                    anchors.leftMargin: 7
-
-                                    anchors.right: uninstallButton.left
-                                    anchors.rightMargin: 6
-
-                                    anchors.verticalCenter: parent.verticalCenter
-
-                                    text: modelData.name
-
-                                    color: root.bar.foreground
-
-                                    font.family: root.bar.fontFamily
-                                    font.pixelSize: Style.font.small
-
-                                    elide: Text.ElideRight
-                                }
-                            }
+                            plugin: modelData
+                            pluginIndex: root.plugins.indexOf(modelData)
+                            isSelected: root.selectedIndex === pluginIndex
                         }
                     }
                 }
@@ -378,10 +221,154 @@ Panel {
             selectedBackground: root.bar.foreground
             selectedText: root.bar.background
             fontFamily: root.bar.fontFamily
-            cornerRadius: Style.radius(12)
+            cornerRadius: Style.cornerRadius
 
             onCanceled: root.cancelDelete()
             onConfirmed: root.confirmDelete()
+        }
+    }
+
+    component PluginRow: BorderSurface {
+        id: row
+        required property var plugin
+        required property int pluginIndex
+        required property bool isSelected
+
+        readonly property bool isEnabled: plugin && plugin.enabled
+        readonly property bool hot: rowMouseArea.containsMouse
+
+        radius: Style.cornerRadius
+        color: hot ? Style.controlFill(false, true, root.bar.foreground, Color.accent) : "transparent"
+        borderSpec: hot ? Border.controlSpec("hover-cursor", root.bar.foreground, Color.accent) : Border.none()
+
+        Behavior on color { ColorAnimation { duration: 60 } }
+
+        implicitHeight: rowContent.implicitHeight + Style.spacing.rowPaddingX
+
+        MouseArea {
+            id: rowMouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+            onContainsMouseChanged: root.selectedIndex = containsMouse ? row.pluginIndex : -1
+        }
+
+        Item {
+            id: rowContent
+            z: 1
+
+            anchors.fill: parent
+            anchors.leftMargin: Style.space(10)
+            anchors.rightMargin: Style.space(10)
+            implicitHeight: Math.max(
+                statusDot.height,
+                pluginName.implicitHeight,
+                powerSwitch.implicitHeight,
+                uninstallButton.height)
+
+            Rectangle {
+                id: statusDot
+
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+
+                width: Style.space(7)
+                height: Style.space(7)
+
+                radius: Style.space(3.5)
+
+                color: row.isEnabled
+                    ? Color.accent
+                    : "#ff5555"
+            }
+
+            ToggleSwitch {
+                id: powerSwitch
+
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+
+                checked: row.plugin ? row.plugin.enabled : false
+                interactive: row.plugin ? row.plugin.canDisable : false
+                busy: actionProcess.running
+
+                trackHeight: Style.space(16)
+                cursorPad: Style.space(6)
+
+                foreground: root.bar.foreground
+                accent: Color.accent
+
+                onToggled: {
+                    root.togglePlugin(row.plugin)
+                }
+
+                PanelToolTip {
+                    visible: powerSwitch.containsMouse
+                    text: row.plugin && row.plugin.enabled ? "Disable" : "Enable"
+                    fontFamily: root.bar.fontFamily
+                }
+            }
+
+            Item {
+                id: uninstallButton
+
+                anchors.right: powerSwitch.left
+                anchors.rightMargin: Style.space(8)
+                anchors.verticalCenter: parent.verticalCenter
+
+                visible: row.plugin && !row.plugin.firstParty
+
+                width: Style.space(20)
+                height: Style.space(20)
+
+                transform: Translate { x: 2 }
+
+                Text {
+                    id: trashIcon
+                    anchors.centerIn: parent
+                    text: "󰩺"
+                    font.family: root.bar.fontFamily
+                    font.pixelSize: Style.font.subtitle
+                    color: trashArea.containsMouse ? root.urgent : root.bar.foreground
+
+                    Behavior on color { ColorAnimation { duration: 60 } }
+                }
+
+                MouseArea {
+                    id: trashArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.askDeletePlugin(row.plugin)
+                }
+
+                PanelToolTip {
+                    visible: trashArea.containsMouse
+                    text: "Uninstall " + (row.plugin ? row.plugin.name : "")
+                    fontFamily: root.bar.fontFamily
+                }
+            }
+
+            Text {
+                id: pluginName
+
+                anchors.left: statusDot.right
+                anchors.leftMargin: Style.space(7)
+
+                anchors.right: uninstallButton.left
+                anchors.rightMargin: Style.space(8)
+
+                anchors.verticalCenter: parent.verticalCenter
+
+                text: row.plugin ? row.plugin.name : ""
+
+                color: root.bar.foreground
+
+                font.family: root.bar.fontFamily
+                font.pixelSize: Style.font.body
+
+                elide: Text.ElideRight
+            }
         }
     }
 }

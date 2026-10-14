@@ -24,13 +24,6 @@ Clone and enable the plugin:
 omarchy plugin install https://github.com/nrm59/omaplugin-manager.git --enable
 ```
 
-Restart the Omarchy shell:
-
-```bash
-omarchy-restart-shell
-```
-
-The plugin will then appear in the Omarchy bar.
 
 ## Usage
 
@@ -53,19 +46,11 @@ omarchy plugin disable nrm59.omaplugin-manager
 omarchy plugin remove nrm59.omaplugin-manager --yes
 ```
 
-Then restart the Omarchy shell:
-
-```bash
-omarchy-restart-shell
-```
 
 ## Version
 
-**1.0.0**
+**1.3.0**
 
-## Status
-
-In development
 
 ## License
 
